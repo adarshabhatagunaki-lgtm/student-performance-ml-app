@@ -1,150 +1,69 @@
+import streamlit as st
 import pandas as pd
 import numpy as np
-import pickle
 import os
-
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
 
+# --- 1. PAGE CONFIGURATION ---
+st.set_page_config(page_title="Student Performance Predictor", layout="centered")
+st.title("🎓 Student Performance Predictor")
+st.markdown("Enter the details below to predict the student's final score.")
 
-# -----------------------------
-# Load Dataset
-# -----------------------------
+# --- 2. DATA LOADING (Safe Version) ---
 def load_data():
-
-    path = "student_performance_updated_1000.csv"
-
+    # Use a relative path so it works on both your PC and the Cloud
+    path = "C:\\Users\\adarsh\\Desktop\\student-performance-ml-app\\student_performance_updated_1000.csv"
+    
+    # If the file is not in the main folder, check the 'dataset' folder
     if not os.path.exists(path):
-        print("Dataset not found. Check file location.")
-        exit()
+        path = os.path.join("dataset", path)
+        
+    if os.path.exists(path):
+        return pd.read_csv(path)
+    else:
+        # Instead of exit(), we show an error on the screen
+        st.error(f"⚠️ Dataset not found at: {path}")
+        return None
 
-    df = pd.read_csv(path)
+df = load_data()
+if df is not None:
+    try:
+        # Training a simple model on the fly for the app
+        # The dataset has these fields: AttendanceRate, StudyHoursPerWeek, PreviousGrade, FinalGrade
+        required_features = ['AttendanceRate', 'StudyHoursPerWeek', 'PreviousGrade']
+        target_column = 'FinalGrade'
 
-    print("Columns in dataset:", df.columns)
+        missing = [c for c in required_features + [target_column] if c not in df.columns]
+        if missing:
+            raise ValueError(f"Missing required columns in dataset: {missing}")
 
-    df.rename(columns={
-        "Study Hours": "study_hours",
-        "PreviousGrade": "previous_score",
-        "Attendance (%)": "sleep_hours",
-        "ExtracurricularActivities": "practice_papers",
-        "FinalGrade": "final_score"
-    }, inplace=True)
+        X = df[required_features]
+        y = df[target_column]
 
-    return df
+        model = LinearRegression()
+        model.fit(X, y)
 
+        # --- USER INPUT SECTION ---
+        st.divider()
+        st.subheader("Student Metrics")
 
-# -----------------------------
-# Data Exploration
-# -----------------------------
-def explore_data(df):
+        attendance = st.slider("Attendance Rate (%)", 0, 100, 85)
+        study = st.number_input("Study Hours per Week", 0, 100, 15)
+        previous_grade = st.slider("Previous Grade (%)", 0, 100, 75)
 
-    print("First 5 rows")
-    print(df.head())
+        # --- PREDICTION SECTION ---
+        st.divider()
+        if st.button("Calculate Predicted Score", type="primary"):
+            input_data = np.array([[attendance, study, previous_grade]])
+            prediction = model.predict(input_data)
+            
+            # Show the result in a nice box
+            st.balloons()
+            st.success(f"### Predicted Final Score: {prediction[0]:.2f}")
+            
+    except Exception as e:
+        st.warning(f"Error setting up the model: {e}")
+        st.info("Check if your CSV column names match: 'AttendanceRate', 'StudyHoursPerWeek','PreviousGrade', and 'FinalGrade'.")
 
-    print("\nDataset Info")
-    print(df.info())
-
-    print("\nStatistics")
-    print(df.describe())
-
-
-# -----------------------------
-# Feature Selection
-# -----------------------------
-def split_features(df):
-
-    df = df.dropna()
-
-    X = df[
-        [
-            "study_hours",
-            "previous_score",
-            "sleep_hours",
-            "practice_papers"
-        ]
-    ]
-
-    y = df["final_score"]
-
-    return X, y
-
-
-# -----------------------------
-# Train Test Split
-# -----------------------------
-def split_dataset(X, y):
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=0.2,
-        random_state=42
-    )
-
-    return X_train, X_test, y_train, y_test
-
-
-# -----------------------------
-# Train Model
-# -----------------------------
-def train_model(X_train, y_train):
-
-    model = LinearRegression()
-
-    model.fit(X_train, y_train)
-
-    return model
-
-
-# -----------------------------
-# Evaluate Model
-# -----------------------------
-def evaluate_model(model, X_test, y_test):
-
-    predictions = model.predict(X_test)
-
-    mse = mean_squared_error(y_test, predictions)
-    rmse = np.sqrt(mse)
-    r2 = r2_score(y_test, predictions)
-
-    print("Model Evaluation")
-    print("MSE:", mse)
-    print("RMSE:", rmse)
-    print("R2 Score:", r2)
-
-
-# -----------------------------
-# Save Model
-# -----------------------------
-def save_model(model):
-
-    os.makedirs("models", exist_ok=True)
-
-    pickle.dump(model, open("models/model.pkl", "wb"))
-
-    print("Model saved successfully!")
-
-
-# -----------------------------
-# Main Function
-# -----------------------------
-def main():
-
-    df = load_data()
-
-    explore_data(df)
-
-    X, y = split_features(df)
-
-    X_train, X_test, y_train, y_test = split_dataset(X, y)
-
-    model = train_model(X_train, y_train)
-
-    evaluate_model(model, X_test, y_test)
-
-    save_model(model)
-
-
-if __name__ == "__main__":
-    main()
+else:
+    st.info("Please make sure your CSV file is uploaded to your GitHub repository.")
