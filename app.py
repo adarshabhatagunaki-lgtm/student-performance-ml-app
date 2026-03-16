@@ -28,10 +28,23 @@ st.write("Machine Learning project to predict student final scores")
 @st.cache_data
 def load_data():
 
-    path = "C:\Users\adarsh\Documents\student_performance_1000.csv"
+    project_dir = os.path.dirname(__file__)
+    candidates = [
+        "student_performance_updated_1000.csv",
+        "student_performance_dataset.CSV.csv",
+        "student_performance.csv",
+        "student_performance_dataset.csv"
+    ]
 
-    if not os.path.exists(path):
-        st.error("Dataset not found in project folder")
+    path = None
+    for candidate in candidates:
+        candidate_path = os.path.join(project_dir, candidate)
+        if os.path.exists(candidate_path):
+            path = candidate_path
+            break
+
+    if path is None:
+        st.error("Dataset not found in project folder: checked several candidate filenames")
         return None
 
     df = pd.read_csv(path)
