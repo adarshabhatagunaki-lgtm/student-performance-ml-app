@@ -2,68 +2,191 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
+
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score
+import matplotlib.pyplot as plt
 
-# --- 1. PAGE CONFIGURATION ---
-st.set_page_config(page_title="Student Performance Predictor", layout="centered")
-st.title("🎓 Student Performance Predictor")
-st.markdown("Enter the details below to predict the student's final score.")
 
-# --- 2. DATA LOADING (Safe Version) ---
+# -----------------------------
+# PAGE SETTINGS
+# -----------------------------
+st.set_page_config(
+    page_title="Student Performance Dashboard",
+    page_icon="🎓",
+    layout="wide"
+)
+
+st.title("🎓 Student Performance Prediction Dashboard")
+
+st.write("Machine Learning project to predict student final scores.")
+
+# -----------------------------
+# LOAD DATASET
+# -----------------------------
+@st.cache_data
 def load_data():
-    # Use a relative path so it works on both your PC and the Cloud
-    path = "C:\\Users\\adarsh\\Desktop\\student-performance-ml-app\\student_performance_updated_1000.csv"
-    
-    # If the file is not in the main folder, check the 'dataset' folder
+
+    path = os.path.join(os.path.dirname(__file__), "student_performance_updated_1000.csv")
+
     if not os.path.exists(path):
-        path = os.path.join("dataset", path)
-        
-    if os.path.exists(path):
-        return pd.read_csv(path)
-    else:
-        # Instead of exit(), we show an error on the screen
-        st.error(f"⚠️ Dataset not found at: {path}")
+        st.error("Dataset not found")
         return None
 
+    data = pd.read_csv(path)
+
+    required_cols = ["AttendanceRate", "StudyHoursPerWeek", "PreviousGrade", "FinalGrade"]
+    for col in required_cols:
+        if col not in data.columns:
+            st.error(f"Required column missing: {col}")
+            return None
+
+    # Fill missing values for model features/target with column mean
+    data[required_cols] = data[required_cols].apply(lambda col: pd.to_numeric(col, errors='coerce'))
+    data[required_cols] = data[required_cols].fillna(data[required_cols].mean())
+
+    return data
+
+
 df = load_data()
+
+# -----------------------------
+# MAIN DASHBOARD
+# -----------------------------
 if df is not None:
-    try:
-        # Training a simple model on the fly for the app
-        # The dataset has these fields: AttendanceRate, StudyHoursPerWeek, PreviousGrade, FinalGrade
-        required_features = ['AttendanceRate', 'StudyHoursPerWeek', 'PreviousGrade']
-        target_column = 'FinalGrade'
 
-        missing = [c for c in required_features + [target_column] if c not in df.columns]
-        if missing:
-            raise ValueError(f"Missing required columns in dataset: {missing}")
+    st.sidebar.title("Navigation")
 
-        X = df[required_features]
-        y = df[target_column]
+    page = st.sidebar.radio(
+        "Go to",
+        [
+            "Dataset",
+            "Visualization",
+            "Model Accuracy",
+            "Prediction"
+        ]
+    )
 
-        model = LinearRegression()
-        model.fit(X, y)
+# -----------------------------
+# DATASET PAGE
+# -----------------------------
+    if page == "Dataset":
 
-        # --- USER INPUT SECTION ---
-        st.divider()
-        st.subheader("Student Metrics")
+        st.header("Dataset Preview")
 
-        attendance = st.slider("Attendance Rate (%)", 0, 100, 85)
-        study = st.number_input("Study Hours per Week", 0, 100, 15)
-        previous_grade = st.slider("Previous Grade (%)", 0, 100, 75)
+        st.write(df.head())
 
-        # --- PREDICTION SECTION ---
-        st.divider()
-        if st.button("Calculate Predicted Score", type="primary"):
-            input_data = np.array([[attendance, study, previous_grade]])
+        st.write("Dataset Shape:", df.shape)
+
+# -----------------------------
+# VISUALIZATION PAGE
+# -----------------------------
+    if page == "Visualization":
+
+        st.header("Data Visualization")
+
+        fig, ax = plt.subplots()
+
+        ax.scatter(
+            df["StudyHoursPerWeek"],
+            df["FinalGrade"]
+        )
+
+        ax.set_xlabel("Study Hours")
+
+        ax.set_ylabel("Final Grade")
+
+        st.pyplot(fig)
+
+# -----------------------------
+# MODEL TRAINING
+# -----------------------------
+    features = [
+        "AttendanceRate",
+        "StudyHoursPerWeek",
+        "PreviousGrade"
+    ]
+
+    target = "FinalGrade"
+
+    X = df[features]
+
+    y = df[target]
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=42
+    )
+
+    model = LinearRegression()
+
+    model.fit(X_train, y_train)
+
+# -----------------------------
+# MODEL ACCURACY
+# -----------------------------
+    if page == "Model Accuracy":
+
+        st.header("Model Performance")
+
+        predictions = model.predict(X_test)
+
+        r2 = r2_score(y_test, predictions)
+
+        st.metric(
+            label="R2 Score",
+            value=round(r2, 3)
+        )
+
+# -----------------------------
+# PREDICTION PAGE
+# -----------------------------
+    if page == "Prediction":
+
+        st.header("Predict Student Final Score")
+
+        attendance = st.slider(
+            "Attendance Rate (%)",
+            0,
+            100,
+            85
+        )
+
+        study_hours = st.slider(
+            "Study Hours per Week",
+            0,
+            50,
+            15
+        )
+
+        previous_grade = st.slider(
+            "Previous Grade (%)",
+            0,
+            100,
+            70
+        )
+
+        if st.button("Predict Score"):
+
+            input_data = np.array([
+                [
+                    attendance,
+                    study_hours,
+                    previous_grade
+                ]
+            ])
+
             prediction = model.predict(input_data)
-            
-            # Show the result in a nice box
+
+            st.success(
+                f"Predicted Final Score: {prediction[0]:.2f}"
+            )
+
             st.balloons()
-            st.success(f"### Predicted Final Score: {prediction[0]:.2f}")
-            
-    except Exception as e:
-        st.warning(f"Error setting up the model: {e}")
-        st.info("Check if your CSV column names match: 'AttendanceRate', 'StudyHoursPerWeek','PreviousGrade', and 'FinalGrade'.")
 
 else:
-    st.info("Please make sure your CSV file is uploaded to your GitHub repository.")
+
+    st.warning("Dataset not available.")
