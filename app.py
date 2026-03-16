@@ -248,61 +248,61 @@ if df is not None:
 # -----------------------------
 # PREDICTION PAGE
 # -----------------------------
-elif page == "Prediction":
+    elif page == "Prediction":
 
-    st.header("🎯 Predict Student Performance")
+        st.header("Predict Student Final Score")
 
-    st.write("Fill in the student details below to estimate the final exam score.")
-
-    st.markdown("---")
-
-    # Prediction Form
-    with st.form("prediction_form"):
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            attendance = st.slider("📅 Attendance Rate (%)", 0, 100, 80)
-            previous_grade = st.slider("📝 Previous Grade (%)", 0, 100, 70)
-
-        with col2:
-            study_hours = st.slider("📚 Study Hours Per Week", 0, 50, 15)
-
-        submit = st.form_submit_button("🚀 Predict Performance")
-
-    if submit:
-
-        input_data = np.array([[attendance, study_hours, previous_grade]])
-        prediction = model.predict(input_data)[0]
-        st.markdown("---")
-        st.subheader("📊 Prediction Result")
-
-        # Result Card
-        st.metric(
-            label="Predicted Final Score",
-            value=f"{prediction:.2f} / 100"
+        attendance = st.slider(
+            "Attendance Rate (%)",
+            0,
+            100,
+            85
         )
 
-        # Score Progress Bar
-        st.progress(int(prediction))
+        study_hours = st.slider(
+            "Study Hours per Week",
+            0,
+            50,
+            15
+        )
 
-        # Performance Badge
-        if prediction >= 85:
-            st.success("🏆 Performance Level: Excellent")
+        previous_grade = st.slider(
+            "Previous Grade (%)",
+            0,
+            100,
+            70
+        )
 
-        elif prediction >= 70:
-            st.info("👍 Performance Level: Good")
+        if st.button("Predict Score"):
 
-        elif prediction >= 50:
-            st.warning("⚠ Performance Level: Average")
+            input_data = np.array([
+                [
+                    attendance,
+                    study_hours,
+                    previous_grade
+                ]
+            ])
 
-        else:
-            st.error("❗ Performance Level: Needs Improvement")
+            prediction = model.predict(input_data)
+            score = float(prediction[0])
 
-        st.markdown("---")
+            st.success(
+                f"Predicted Final Score: {score:.2f}"
+            )
 
-        st.write("📈 **Suggestion:** Higher study hours and good attendance improve performance.")      
+            if score >= 85:
+                st.success("Excellent Performance 🎉")
 
+            elif score >= 70:
+                st.info("Good Performance 👍")
+
+            elif score >= 50:
+                st.warning("Average Performance")
+
+            else:
+                st.error("Needs Improvement ⚠")
+
+            st.balloons()
 else:
 
     st.warning("Dataset not available.")
