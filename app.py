@@ -245,81 +245,64 @@ if df is not None:
 
         st.pyplot(fig3)
 
-# -----------------------------
+  # -----------------------------
 # PREDICTION PAGE
 # -----------------------------
 elif page == "Prediction":
 
-    st.header("🎯 Predict Student Final Score")
+    st.header("🎯 Predict Student Performance")
 
-    st.markdown("Enter the student details below to predict the final exam score.")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        attendance = st.slider(
-            "📅 Attendance Rate (%)",
-            0,
-            100,
-            85
-        )
-
-        study_hours = st.slider(
-            "📚 Study Hours per Week",
-            0,
-            50,
-            15
-        )
-
-    with col2:
-        previous_grade = st.slider(
-            "📝 Previous Grade (%)",
-            0,
-            100,
-            70
-        )
+    st.write("Fill in the student details below to estimate the final exam score.")
 
     st.markdown("---")
 
-    if st.button("🚀 Predict Score"):
+    # Prediction Form
+    with st.form("prediction_form"):
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            attendance = st.slider("📅 Attendance Rate (%)", 0, 100, 80)
+            previous_grade = st.slider("📝 Previous Grade (%)", 0, 100, 70)
+
+        with col2:
+            study_hours = st.slider("📚 Study Hours Per Week", 0, 50, 15)
+
+        submit = st.form_submit_button("🚀 Predict Performance")
+
+    if submit:
 
         input_data = np.array([[attendance, study_hours, previous_grade]])
-
         prediction = model.predict(input_data)[0]
+        st.markdown("---")
+        st.subheader("📊 Prediction Result")
 
-        st.subheader("📊 Predicted Final Score")
+        # Result Card
+        st.metric(
+            label="Predicted Final Score",
+            value=f"{prediction:.2f} / 100"
+        )
 
-        st.metric("Score", f"{prediction:.2f} / 100")
-
-        # Progress Bar
+        # Score Progress Bar
         st.progress(int(prediction))
 
-        # Performance Message
+        # Performance Badge
         if prediction >= 85:
-            st.success("🌟 Excellent Performance!")
+            st.success("🏆 Performance Level: Excellent")
 
         elif prediction >= 70:
-            st.info("👍 Good Performance")
+            st.info("👍 Performance Level: Good")
 
         elif prediction >= 50:
-            st.warning("⚠ Average Performance")
+            st.warning("⚠ Performance Level: Average")
 
         else:
-            st.error("❗ Needs Improvement")
+            st.error("❗ Performance Level: Needs Improvement")
 
         st.markdown("---")
 
-        st.subheader("📈 Score Interpretation")
-
-        st.write("""
-        - **85+** : Outstanding student  
-        - **70 – 84** : Good academic performance  
-        - **50 – 69** : Average performance  
-        - **Below 50** : Needs improvement
-        """)
-
-        st.balloons()
+        st.write("📈 **Suggestion:** Higher study hours and good attendance improve performance.")      
 
 else:
-    
+
     st.warning("Dataset not available.")

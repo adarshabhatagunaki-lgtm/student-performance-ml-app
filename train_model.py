@@ -13,16 +13,28 @@ from sklearn.metrics import r2_score
 # -----------------------------
 def load_data():
     # Prefer local project path so code works on any machine.
-    local_path = os.path.join(os.path.dirname(__file__), "student_performance_updated_1000.csv")
-    fallback_path = "C:/Users/adarsh/Desktop/student_project/student_performance_updated_1000.csv"
+    project_dir = os.path.dirname(__file__)
+    candidates = [
+        "student_performance_updated_1000.csv",
+        "student_performance_dataset.CSV.csv",
+        "student_performance.csv",
+        "student_performance_dataset.csv"
+    ]
 
-    if os.path.exists(local_path):
-        path = local_path
-    elif os.path.exists(fallback_path):
+    path = None
+    for candidate in candidates:
+        candidate_path = os.path.join(project_dir, candidate)
+        if os.path.exists(candidate_path):
+            path = candidate_path
+            break
+
+    fallback_path = "C:/Users/adarsh/Desktop/student_project/student_performance_updated_1000.csv"
+    if path is None and os.path.exists(fallback_path):
         path = fallback_path
-    else:
+
+    if path is None:
         raise FileNotFoundError(
-            f"Dataset not found. Checked: {local_path} and {fallback_path}"
+            f"Dataset not found. Checked: {', '.join(candidates)} and {fallback_path}"
         )
 
     data = pd.read_csv(path)
@@ -49,17 +61,16 @@ def explore_data(df):
 # -----------------------------
 def split_features(df):
 
+    # Match the fields used in app.py and dataset
     X = df[
         [
-            "study_hours",
-            "previous_score",
-            "sleep_hours",
-            "practice_papers",
-            "activities"
+            "AttendanceRate",
+            "StudyHoursPerWeek",
+            "PreviousGrade"
         ]
     ]
 
-    y = df["final_score"]
+    y = df["FinalGrade"]
 
     return X, y
 
