@@ -245,7 +245,7 @@ if df is not None:
 
         st.pyplot(fig3)
 
-  # -----------------------------
+# -----------------------------
 # PREDICTION PAGE
 # -----------------------------
 elif page == "Prediction":
