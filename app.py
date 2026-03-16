@@ -94,6 +94,7 @@ if df is not None:
     predictions = model.predict(X_test)
     r2 = r2_score(y_test, predictions)
 
+
 # -----------------------------
 # SIDEBAR NAVIGATION
 # -----------------------------
@@ -110,6 +111,11 @@ if df is not None:
             "Prediction"
         ]
     )
+
+    # Set safe defaults for prediction variables so button click does not crash
+    attendance = 0
+    study_hours = 0
+    previous_grade = 0
 
 
 # -----------------------------
@@ -178,6 +184,7 @@ if df is not None:
 
         st.pyplot(fig)
 
+
 # -----------------------------
 # DATASET PAGE
 # -----------------------------
@@ -188,6 +195,8 @@ if df is not None:
         st.dataframe(df)
 
         st.write("Dataset Shape:", df.shape)
+
+
 # -----------------------------
 # VISUALIZATION PAGE
 # -----------------------------
@@ -242,6 +251,7 @@ if df is not None:
 
         st.pyplot(fig3)
 
+
 # -----------------------------
 # PREDICTION PAGE
 # -----------------------------
@@ -256,50 +266,45 @@ if df is not None:
             85
         )
 
-    study_hours = st.slider(
-        "Study Hours per Week",
-        0,
-        50,
-        15
-    )
-
-    previous_grade = st.slider(
-        "Previous Grade (%)",
-        0,
-        100,
-        70
-    )
-
-    if st.button("Predict Score"):
-
-        input_data = np.array([
-            [
-                attendance,
-                study_hours,
-                previous_grade
-            ]
-        ])
-
-        prediction = model.predict(input_data)
-        score = float(prediction[0])
-
-        st.success(
-            f"Predicted Final Score: {score:.2f}"
+        study_hours = st.slider(
+            "Study Hours per Week",
+            0,
+            50,
+            15
         )
 
-        if score >= 85:
-            st.success("Excellent Performance 🎉")
+        previous_grade = st.slider(
+            "Previous Grade (%)",
+            0,
+            100,
+            70
+        )
 
-        elif score >= 70:
-            st.info("Good Performance 👍")
+        if st.button("Predict Score"):
 
-        elif score >= 50:
-            st.warning("Average Performance")
+            input_data = np.array([
+                [attendance, study_hours, previous_grade]
+            ])
 
-        else:
-            st.error("Needs Improvement ⚠")
+            prediction = model.predict(input_data)
+            score = float(prediction[0])
 
-        st.balloons()
+            st.success(f"Predicted Final Score: {score:.2f}")
+
+            if score >= 85:
+                st.success("Excellent Performance 🎉")
+
+            elif score >= 70:
+                st.info("Good Performance 👍")
+
+            elif score >= 50:
+                st.warning("Average Performance")
+
+            else:
+                st.error("Needs Improvement ⚠")
+
+            st.balloons()
+
 else:
 
     st.warning("Dataset not available.")
