@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import plotly.express as px
 import os
 
 from sklearn.linear_model import LinearRegression
@@ -160,7 +161,7 @@ if df is not None:
 # -----------------------------
     elif page == "Dashboard":
 
-        st.header("📊 Dashboard")
+        st.header("📊 Dashboard Overview")
 
         col1, col2, col3 = st.columns(3)
 
@@ -168,7 +169,9 @@ if df is not None:
         col2.metric("Average Final Grade", round(df["FinalGrade"].mean(), 2))
         col3.metric("Model R² Score", round(r2, 3))
 
-        st.subheader("Final Grade Distribution")
+        st.markdown("---")
+
+        st.subheader("📊 Final Grade Distribution")
 
         fig, ax = plt.subplots()
         ax.hist(df["FinalGrade"], bins=20)
@@ -178,18 +181,23 @@ if df is not None:
 
         st.pyplot(fig)
 
+        st.markdown("---")
 
-# -----------------------------
-# DATASET PAGE
-# -----------------------------
-    elif page == "Dataset":
+        st.subheader("🌐 3D Student Performance Visualization")
 
-        st.header("Dataset Preview")
+        st.write("This 3D graph shows how Attendance and Study Hours influence Final Grades.")
 
-        st.dataframe(df)
+        fig3d = px.scatter_3d(
+            df,
+            x="AttendanceRate",
+            y="StudyHoursPerWeek",
+            z="FinalGrade",
+            color="FinalGrade",
+            size="FinalGrade",
+            title="3D Student Performance Analysis"
+        )
 
-        st.write("Dataset Shape:", df.shape)
-
+        st.plotly_chart(fig3d, use_container_width=True)
 
 # -----------------------------
 # VISUALIZATION PAGE
@@ -229,80 +237,77 @@ if df is not None:
 # MODEL ACCURACY PAGE
 # -----------------------------
     elif page == "Model Accuracy":
+    st.metric("R² Score", round(r2, 3))
 
-        st.header("Model Performance")
+    st.subheader("Actual vs Predicted Scores")
 
-        st.metric("R² Score", round(r2, 3))
+    fig3, ax3 = plt.subplots()
 
-        st.subheader("Actual vs Predicted Scores")
+    ax3.scatter(y_test, predictions)
 
-        fig3, ax3 = plt.subplots()
+    ax3.set_xlabel("Actual Score")
+    ax3.set_ylabel("Predicted Score")
 
-        ax3.scatter(y_test, predictions)
-
-        ax3.set_xlabel("Actual Score")
-        ax3.set_ylabel("Predicted Score")
-
-        st.pyplot(fig3)
+    st.pyplot(fig3)
 
 # -----------------------------
 # PREDICTION PAGE
 # -----------------------------
-    elif page == "Prediction":
+elif page == "Prediction":
 
-        st.header("Predict Student Final Score")
+    st.header("Predict Student Final Score")
 
-        attendance = st.slider(
-            "Attendance Rate (%)",
-            0,
-            100,
-            85
+    attendance = st.slider(
+        "Attendance Rate (%)",
+        0,
+        100,
+        85
+    )
+
+    study_hours = st.slider(
+        "Study Hours per Week",
+        0,
+        50,
+        15
+    )
+
+    previous_grade = st.slider(
+        "Previous Grade (%)",
+        0,
+        100,
+        70
+    )
+
+    if st.button("Predict Score"):
+
+        input_data = np.array([
+            [
+                attendance,
+                study_hours,
+                previous_grade
+            ]
+        ])
+
+        prediction = model.predict(input_data)
+        score = float(prediction[0])
+
+        st.success(
+            f"Predicted Final Score: {score:.2f}"
         )
 
-        study_hours = st.slider(
-            "Study Hours per Week",
-            0,
-            50,
-            15
-        )
+        if score >= 85:
+            st.success("Excellent Performance 🎉")
 
-        previous_grade = st.slider(
-            "Previous Grade (%)",
-            0,
-            100,
-            70
-        )
+        elif score >= 70:
+            st.info("Good Performance 👍")
 
-        if st.button("Predict Score"):
+        elif score >= 50:
+            st.warning("Average Performance")
 
-            input_data = np.array([
-                [
-                    attendance,
-                    study_hours,
-                    previous_grade
-                ]
-            ])
+        else:
+            st.error("Needs Improvement ⚠")
 
-            prediction = model.predict(input_data)
-            score = float(prediction[0])
-
-            st.success(
-                f"Predicted Final Score: {score:.2f}"
-            )
-
-            if score >= 85:
-                st.success("Excellent Performance 🎉")
-
-            elif score >= 70:
-                st.info("Good Performance 👍")
-
-            elif score >= 50:
-                st.warning("Average Performance")
-
-            else:
-                st.error("Needs Improvement ⚠")
-
-            st.balloons()
+        st.balloons()
 else:
 
     st.warning("Dataset not available.")
