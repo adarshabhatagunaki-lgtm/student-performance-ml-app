@@ -44,7 +44,7 @@ def load_data():
             break
 
     if path is None:
-        st.error("Dataset not found in project folder: checked several candidate filenames")
+        st.error("Dataset not found in project folder")
         return None
 
     df = pd.read_csv(path)
@@ -102,6 +102,7 @@ if df is not None:
     page = st.sidebar.radio(
         "Select Page",
         [
+            "Home",
             "Dashboard",
             "Dataset",
             "Visualization",
@@ -112,9 +113,52 @@ if df is not None:
 
 
 # -----------------------------
+# HOME PAGE
+# -----------------------------
+    if page == "Home":
+
+        st.header("🏠 Home")
+
+        st.write("""
+        Welcome to the **Student Performance Prediction Dashboard** 🎓
+        """)
+
+        st.image(
+            "https://cdn-icons-png.flaticon.com/512/3135/3135755.png",
+            width=200
+        )
+
+        st.markdown("---")
+
+        st.subheader("📌 Features")
+
+        st.write("""
+        ✔ View Student Dataset  
+        ✔ Explore Data Visualizations  
+        ✔ Check Model Accuracy  
+        ✔ Predict Student Final Score  
+        ✔ Interactive Dashboard
+        """)
+
+        st.markdown("---")
+
+        st.subheader("📊 Model Inputs")
+
+        st.write("""
+        The model predicts **Final Grade** based on:
+
+        • Attendance Rate  
+        • Study Hours Per Week  
+        • Previous Grade
+        """)
+
+        st.info("Use the sidebar to navigate through the dashboard.")
+
+
+# -----------------------------
 # DASHBOARD PAGE
 # -----------------------------
-    if page == "Dashboard":
+    elif page == "Dashboard":
 
         st.header("📊 Dashboard")
 
@@ -138,7 +182,7 @@ if df is not None:
 # -----------------------------
 # DATASET PAGE
 # -----------------------------
-    if page == "Dataset":
+    elif page == "Dataset":
 
         st.header("Dataset Preview")
 
@@ -150,7 +194,7 @@ if df is not None:
 # -----------------------------
 # VISUALIZATION PAGE
 # -----------------------------
-    if page == "Visualization":
+    elif page == "Visualization":
 
         st.header("Study Hours vs Final Grade")
 
@@ -165,7 +209,6 @@ if df is not None:
         ax1.set_ylabel("Final Grade")
 
         st.pyplot(fig1)
-
 
         st.header("Attendance Rate vs Final Grade")
 
@@ -185,7 +228,7 @@ if df is not None:
 # -----------------------------
 # MODEL ACCURACY PAGE
 # -----------------------------
-    if page == "Model Accuracy":
+    elif page == "Model Accuracy":
 
         st.header("Model Performance")
 
@@ -202,65 +245,81 @@ if df is not None:
 
         st.pyplot(fig3)
 
-
 # -----------------------------
 # PREDICTION PAGE
 # -----------------------------
-    if page == "Prediction":
+elif page == "Prediction":
 
-        st.header("Predict Student Final Score")
+    st.header("🎯 Predict Student Final Score")
 
+    st.markdown("Enter the student details below to predict the final exam score.")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
         attendance = st.slider(
-            "Attendance Rate (%)",
+            "📅 Attendance Rate (%)",
             0,
             100,
             85
         )
 
         study_hours = st.slider(
-            "Study Hours per Week",
+            "📚 Study Hours per Week",
             0,
             50,
             15
         )
 
+    with col2:
         previous_grade = st.slider(
-            "Previous Grade (%)",
+            "📝 Previous Grade (%)",
             0,
             100,
             70
         )
 
-        if st.button("Predict Score"):
+    st.markdown("---")
 
-            input_data = np.array([
-                [
-                    attendance,
-                    study_hours,
-                    previous_grade
-                ]
-            ])
+    if st.button("🚀 Predict Score"):
 
-            prediction = model.predict(input_data)
+        input_data = np.array([[attendance, study_hours, previous_grade]])
 
-            st.success(
-                f"Predicted Final Score: {prediction[0]:.2f}"
-            )
+        prediction = model.predict(input_data)[0]
 
-            if prediction >= 85:
-                st.success("Excellent Performance 🎉")
+        st.subheader("📊 Predicted Final Score")
 
-            elif prediction >= 70:
-                st.info("Good Performance 👍")
+        st.metric("Score", f"{prediction:.2f} / 100")
 
-            elif prediction >= 50:
-                st.warning("Average Performance")
+        # Progress Bar
+        st.progress(int(prediction))
 
-            else:
-                st.error("Needs Improvement ⚠")
+        # Performance Message
+        if prediction >= 85:
+            st.success("🌟 Excellent Performance!")
 
-            st.balloons()
+        elif prediction >= 70:
+            st.info("👍 Good Performance")
+
+        elif prediction >= 50:
+            st.warning("⚠ Average Performance")
+
+        else:
+            st.error("❗ Needs Improvement")
+
+        st.markdown("---")
+
+        st.subheader("📈 Score Interpretation")
+
+        st.write("""
+        - **85+** : Outstanding student  
+        - **70 – 84** : Good academic performance  
+        - **50 – 69** : Average performance  
+        - **Below 50** : Needs improvement
+        """)
+
+        st.balloons()
 
 else:
-
+    
     st.warning("Dataset not available.")
