@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
 import os
 
 from sklearn.linear_model import LinearRegression
@@ -161,7 +160,7 @@ if df is not None:
 # -----------------------------
     elif page == "Dashboard":
 
-        st.header("📊 Dashboard Overview")
+        st.header("📊 Dashboard")
 
         col1, col2, col3 = st.columns(3)
 
@@ -169,9 +168,7 @@ if df is not None:
         col2.metric("Average Final Grade", round(df["FinalGrade"].mean(), 2))
         col3.metric("Model R² Score", round(r2, 3))
 
-        st.markdown("---")
-
-        st.subheader("📊 Final Grade Distribution")
+        st.subheader("Final Grade Distribution")
 
         fig, ax = plt.subplots()
         ax.hist(df["FinalGrade"], bins=20)
@@ -181,24 +178,16 @@ if df is not None:
 
         st.pyplot(fig)
 
-        st.markdown("---")
+# -----------------------------
+# DATASET PAGE
+# -----------------------------
+    elif page == "Dataset":
 
-        st.subheader("🌐 3D Student Performance Visualization")
+        st.header("Dataset Preview")
 
-        st.write("This 3D graph shows how Attendance and Study Hours influence Final Grades.")
+        st.dataframe(df)
 
-        fig3d = px.scatter_3d(
-            df,
-            x="AttendanceRate",
-            y="StudyHoursPerWeek",
-            z="FinalGrade",
-            color="FinalGrade",
-            size="FinalGrade",
-            title="3D Student Performance Analysis"
-        )
-
-        st.plotly_chart(fig3d, use_container_width=True)
-
+        st.write("Dataset Shape:", df.shape)
 # -----------------------------
 # VISUALIZATION PAGE
 # -----------------------------
@@ -237,32 +226,35 @@ if df is not None:
 # MODEL ACCURACY PAGE
 # -----------------------------
     elif page == "Model Accuracy":
-    st.metric("R² Score", round(r2, 3))
 
-    st.subheader("Actual vs Predicted Scores")
+        st.header("Model Performance")
 
-    fig3, ax3 = plt.subplots()
+        st.metric("R² Score", round(r2, 3))
 
-    ax3.scatter(y_test, predictions)
+        st.subheader("Actual vs Predicted Scores")
 
-    ax3.set_xlabel("Actual Score")
-    ax3.set_ylabel("Predicted Score")
+        fig3, ax3 = plt.subplots()
 
-    st.pyplot(fig3)
+        ax3.scatter(y_test, predictions)
+
+        ax3.set_xlabel("Actual Score")
+        ax3.set_ylabel("Predicted Score")
+
+        st.pyplot(fig3)
 
 # -----------------------------
 # PREDICTION PAGE
 # -----------------------------
-elif page == "Prediction":
+    elif page == "Prediction":
 
-    st.header("Predict Student Final Score")
+        st.header("Predict Student Final Score")
 
-    attendance = st.slider(
-        "Attendance Rate (%)",
-        0,
-        100,
-        85
-    )
+        attendance = st.slider(
+            "Attendance Rate (%)",
+            0,
+            100,
+            85
+        )
 
     study_hours = st.slider(
         "Study Hours per Week",
