@@ -12,15 +12,20 @@ from sklearn.metrics import r2_score
 # Load Dataset
 # -----------------------------
 def load_data():
+    # Prefer local project path so code works on any machine.
+    local_path = os.path.join(os.path.dirname(__file__), "student_performance_updated_1000.csv")
+    fallback_path = "C:/Users/adarsh/Desktop/student_project/student_performance_updated_1000.csv"
 
-    path = "C:/Users/adarsh/Desktop/student_project/student_performance_updated_1000.csv"
-
-    if not os.path.exists(path):
-        print("Dataset not found")
-        exit()
+    if os.path.exists(local_path):
+        path = local_path
+    elif os.path.exists(fallback_path):
+        path = fallback_path
+    else:
+        raise FileNotFoundError(
+            f"Dataset not found. Checked: {local_path} and {fallback_path}"
+        )
 
     data = pd.read_csv(path)
-
     return data
 
 
